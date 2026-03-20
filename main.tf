@@ -1,5 +1,5 @@
 provider "aws" {
-  region = "eu-central-1"
+  region = var.aws_region
 }
 
 data "aws_ami" "ubuntu" {
@@ -56,7 +56,7 @@ resource "aws_key_pair" "aws" {
 resource "aws_launch_template" "web_server_lt" {
   name_prefix            = "web_server_lt_"
   image_id               = data.aws_ami.ubuntu.id
-  instance_type          = "t3.micro"
+  instance_type          = var.instance_type
   vpc_security_group_ids = [aws_security_group.web_server_sg.id]
   key_name               = aws_key_pair.aws.key_name
 
@@ -73,11 +73,7 @@ EOF
 
   tag_specifications {
     resource_type = "instance"
-    tags = {
-      Name    = "web_server_instance"
-      Owner   = "Richard"
-      Project = "Terraform"
-    }
+    tags          = var.common_tags
   }
 
   lifecycle {
@@ -114,11 +110,7 @@ resource "aws_autoscaling_group" "web_server_asg" {
   health_check_grace_period = 300
 
   dynamic "tag" {
-    for_each = {
-      Name    = "web_server_asg"
-      Owner   = "Richard"
-      Project = "Terraform"
-    }
+    for_each = var.common_tags
     content {
       key                 = tag.key
       value               = tag.value
@@ -138,11 +130,7 @@ resource "aws_lb" "web" {
 
   enable_deletion_protection = false
 
-  tags = {
-    Name    = "web_lb"
-    Owner   = "Richard"
-    Project = "Terraform"
-  }
+  tags = var.common_tags
 
   lifecycle {
     prevent_destroy = false
